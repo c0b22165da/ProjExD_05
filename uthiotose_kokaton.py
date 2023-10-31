@@ -181,9 +181,9 @@ class Beam(pg.sprite.Sprite):
             self.kill()
 
 
-class Chage_Beam(pg.sprite.Sprite):
+class Charge_Beam(pg.sprite.Sprite):
     """
-    ビームに関するクラス
+    チャージビームに関するクラス。
     """
     def __init__(self, bird: Bird, x:int):
         """
@@ -298,25 +298,25 @@ class Score:
         
 class Beam_status:
     """
-    ビームの状態を表すステータス
+    ビームの状態を表すステータス。ビームのクラスではなく状態を表示させる。
     """
     def __init__(self):
         self.font = pg.font.Font(None, 50)
         self.color = (0, 255, 255)
         self.image = self.font.render(f"normal_beam", 0, self.color)
         self.rect = self.image.get_rect()
-        self.rect.center = 100, HEIGHT-50
+        self.rect.center = 300, HEIGHT-50
 
     def update(self, screen: pg.Surface, x:int):
         """
-        x：ビームのチャージ回数20が一番上それ以上は変わらない
+        x：ビームのチャージ回数。20が一番上それ以上は変わらない
         """
         if x < 10:
-            self.image = self.font.render(f"normal_beam", 0, self.color)
+            self.image = self.font.render(f"normal BEAM", 0, self.color)
         elif 10 <= x < 20:
-            self.image = self.font.render(f"chage beam", 0, self.color)
+            self.image = self.font.render(f"charge BEAM", 0, (255,255,0))
         elif 20 <= x:
-            self.image = self.font.render(f"super beam", 0, self.color)
+            self.image = self.font.render(f"super BEAM", 0, (255,0,0))
         screen.blit(self.image, self.rect)
 
 
@@ -330,7 +330,7 @@ def main():
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
-    chage_beam = pg.sprite.Group()
+    charge_beam = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     x = 0
@@ -342,10 +342,10 @@ def main():
             if event.type == pg.QUIT:
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                if x <= 10:
+                if x < 10:
                     beams.add(Beam(bird))
                 else:
-                    chage_beam.add(Chage_Beam(bird,x))
+                    charge_beam.add(Charge_Beam(bird,x))
                     x = 0
             if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 x += 1
@@ -375,8 +375,9 @@ def main():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.score_up(10)  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
-            
-        for emy in pg.sprite.groupcollide(emys, chage_beam, True, False).keys():
+        
+        # チャージビームの判定
+        for emy in pg.sprite.groupcollide(emys, charge_beam, True, False).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.score_up(10)  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
@@ -384,8 +385,9 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
-            
-        for bomb in pg.sprite.groupcollide(bombs, chage_beam, True, False).keys():
+
+        # チャージビームの判定   
+        for bomb in pg.sprite.groupcollide(bombs, charge_beam, True, False).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
 
@@ -400,21 +402,21 @@ def main():
                 time.sleep(2)
                 return
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
-            score.update(screen)
-            pg.display.update()
-            time.sleep(2)
-            return
+        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
+        #     score.update(screen)
+        #     pg.display.update()
+        #     time.sleep(2)
+        #     return
 
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
-        chage_beam.update()
-        chage_beam.draw(screen)
+        charge_beam.update()
+        charge_beam.draw(screen)
         emys.update()
         emys.draw(screen)
         bombs.update()
