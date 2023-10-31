@@ -53,7 +53,7 @@ class Bird(pg.sprite.Sprite):
         引数2 xy：こうかとん画像の位置座標タプル
         """
         super().__init__()
-        img0 = pg.transform.rotozoom(pg.image.load(f"ex04/fig/{num}.png"), 0, 2.0)
+        img0 = pg.transform.rotozoom(pg.image.load(f"ex05/fig/{num}.png"), 0, 2.0)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
         self.imgs = {
             (+1, 0): img,  # 右
@@ -79,7 +79,7 @@ class Bird(pg.sprite.Sprite):
         引数1 num：こうかとん画像ファイル名の番号
         引数2 screen：画面Surface
         """
-        self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/{num}.png"), 0, 2.0)
+        self.image = pg.transform.rotozoom(pg.image.load(f"ex05/fig/{num}.png"), 0, 2.0)
         screen.blit(self.image, self.rect)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
@@ -139,7 +139,7 @@ class Bomb(pg.sprite.Sprite):
         self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height/2
-        self.speed = 6
+        self.speed = 8
 
     def update(self):
         """
@@ -163,7 +163,7 @@ class Beam(pg.sprite.Sprite):
         super().__init__()
         self.vx, self.vy = bird.get_direction()
         angle = math.degrees(math.atan2(-self.vy, self.vx))
-        self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0)
+        self.image = pg.transform.rotozoom(pg.image.load(f"ex05/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
         self.rect = self.image.get_rect()
@@ -192,7 +192,7 @@ class Explosion(pg.sprite.Sprite):
         引数2 life：爆発時間
         """
         super().__init__()
-        img = pg.image.load("ex04/fig/explosion.gif")
+        img = pg.image.load("ex05/fig/explosion.gif")
         self.imgs = [img, pg.transform.flip(img, 1, 1)]
         self.image = self.imgs[0]
         self.rect = self.image.get_rect(center=obj.rect.center)
@@ -213,15 +213,17 @@ class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
-    imgs = [pg.image.load(f"ex04/fig/alien{i}.png") for i in range(1, 4)]
+    imgs = pg.image.load(f"ex05/fig/3.png") #飛んでるこうかとんの画像読み込み
+    imgs2 = pg.transform.flip(imgs, True, False) #反転したこうかとん
 
     def __init__(self):
         super().__init__()
-        self.image = random.choice(__class__.imgs)
+        self.image = self.imgs
+        self.image2 = self.imgs2
         self.rect = self.image.get_rect()
         self.rect.center = random.randint(0, WIDTH), 0
-        self.vy = +6
-        self.bound = random.randint(50, HEIGHT/2)  # 停止位置
+        self.vy = +10
+        self.bound = random.randint(50, 550)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
 
@@ -235,6 +237,9 @@ class Enemy(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stop"
         self.rect.centery += self.vy
+        
+        if WIDTH/2 > self.rect[0]:
+            self.image = self.image2 #画面の左半分だったらこうかとんの画像を反転する
 
 
 class Score:
@@ -265,7 +270,7 @@ class Score:
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("ex04/fig/pg_bg.jpg")
+    bg_img = pg.image.load("ex05/fig/pg_bg.jpg")
     score = Score()
 
     bird = Bird(3, (900, 400))
@@ -295,7 +300,6 @@ def main():
 
         screen.blit(bg_img, [0, 0])
 
-
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
@@ -319,20 +323,26 @@ def main():
                 score.score_up(1)
             if bird.state=="nomal":
                 bird.change_img(8, screen) # こうかとん悲しみエフェクト
+                score.font = pg.font.Font(None, 250)
+                score.rect.center = WIDTH/2-250, HEIGHT/2 #スコアをやられた際に真ん中に表示
                 score.update(screen)
+                # font = pg.font.Font(None, 250)
+                # color = (0, 0, 255)
+                # image3 = font.render(f"Game Over", 0, color)
+                # image3.update(screen)
                 pg.display.update()
                 time.sleep(2)
                 return
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
-            score.update(screen)
-            pg.display.update()
-            time.sleep(2)
-            return
+        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
+        #     score.update(screen)
+        #     pg.display.update()
+        #     time.sleep(2)
+        #     return
 
         bird.update(key_lst, screen)
         beams.update()
