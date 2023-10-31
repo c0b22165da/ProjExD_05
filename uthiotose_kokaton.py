@@ -55,18 +55,18 @@ class Bird(pg.sprite.Sprite):
         super().__init__()
         img0 = pg.transform.rotozoom(pg.image.load(f"ex04/fig/{num}.png"), 0, 2.0)
         img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん
-        self.imgs = {
-            (+1, 0): img,  # 右
-            (+1, -1): pg.transform.rotozoom(img, 45, 1.0),  # 右上
-            (0, -1): pg.transform.rotozoom(img, 90, 1.0),  # 上
-            (-1, -1): pg.transform.rotozoom(img0, -45, 1.0),  # 左上
-            (-1, 0): img0,  # 左
-            (-1, +1): pg.transform.rotozoom(img0, 45, 1.0),  # 左下
-            (0, +1): pg.transform.rotozoom(img, -90, 1.0),  # 下
-            (+1, +1): pg.transform.rotozoom(img, -45, 1.0),  # 右下
-        }
+        # self.imgs = {
+        #     (+1, 0): img,  # 右
+        #     (+1, -1): pg.transform.rotozoom(img, 45, 1.0),  # 右上
+        #     (0, -1): pg.transform.rotozoom(img, 90, 1.0),  # 上
+        #     (-1, -1): pg.transform.rotozoom(img0, -45, 1.0),  # 左上
+        #     (-1, 0): img0,  # 左
+        #     (-1, +1): pg.transform.rotozoom(img0, 45, 1.0),  # 左下
+        #     (0, +1): pg.transform.rotozoom(img, -90, 1.0),  # 下
+        #     (+1, +1): pg.transform.rotozoom(img, -45, 1.0),  # 右下
+        # }
         self.dire = (+1, 0)
-        self.image = self.imgs[self.dire]
+        self.image = pg.transform.rotozoom(img, 90, 1.0)
         self.rect = self.image.get_rect()
         self.rect.center = xy
         self.speed = 10
@@ -100,7 +100,7 @@ class Bird(pg.sprite.Sprite):
                     self.rect.move_ip(-self.speed*mv[0], -self.speed*mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
-            self.image = self.imgs[self.dire]
+            # self.image = self.imgs[self.dire]
         if self.state == "hyper":
             self.hyper_life -= 1
             self.image=pg.transform.laplacian(self.image)
@@ -161,9 +161,43 @@ class Beam(pg.sprite.Sprite):
         引数 bird：ビームを放つこうかとん
         """
         super().__init__()
-        self.vx, self.vy = bird.get_direction()
+        self.vx, self.vy = (0,-1) # bird.get_direction()
         angle = math.degrees(math.atan2(-self.vy, self.vx))
-        self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0)
+        self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0) 
+        self.vx = math.cos(math.radians(angle))
+        self.vy = -math.sin(math.radians(angle))    
+        self.rect = self.image.get_rect()
+        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
+        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.speed = 10
+
+    def update(self):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+
+
+class Chage_Beam(pg.sprite.Sprite):
+    """
+    ビームに関するクラス
+    """
+    def __init__(self, bird: Bird, x:int):
+        """
+        ビーム画像Surfaceを生成する
+        引数 bird：ビームを放つこうかとん
+        引数x：チャージ回数
+        """
+        super().__init__()
+        self.vx, self.vy = (0,-1)
+        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        if 10 <= x <20:
+            self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 3.0) 
+        elif 20 <= x:
+            self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 5.0) 
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
         self.rect = self.image.get_rect()
@@ -179,6 +213,7 @@ class Beam(pg.sprite.Sprite):
         self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
+
 
 
 class Explosion(pg.sprite.Sprite):
@@ -249,7 +284,7 @@ class Score:
         self.score = 0
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         self.rect = self.image.get_rect()
-        self.rect.center = 100, HEIGHT-50
+        self.rect.center = 100, HEIGHT-850
 
     def score_up(self, add):
         self.score += add
@@ -260,6 +295,29 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         screen.blit(self.image, self.rect)
+        
+class Beam_status:
+    """
+    ビームの状態を表すステータス
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 255, 255)
+        self.image = self.font.render(f"normal_beam", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-50
+
+    def update(self, screen: pg.Surface, x:int):
+        """
+        x：ビームのチャージ回数20が一番上それ以上は変わらない
+        """
+        if x < 10:
+            self.image = self.font.render(f"normal_beam", 0, self.color)
+        elif 10 <= x < 20:
+            self.image = self.font.render(f"chage beam", 0, self.color)
+        elif 20 <= x:
+            self.image = self.font.render(f"super beam", 0, self.color)
+        screen.blit(self.image, self.rect)
 
 
 def main():
@@ -267,13 +325,15 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("ex04/fig/pg_bg.jpg")
     score = Score()
+    beam_status = Beam_status()
 
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
+    chage_beam = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
-
+    x = 0
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -282,7 +342,14 @@ def main():
             if event.type == pg.QUIT:
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird))
+                if x <= 10:
+                    beams.add(Beam(bird))
+                else:
+                    chage_beam.add(Chage_Beam(bird,x))
+                    x = 0
+            if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                x += 1
+                
 
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.score > 100:
                 score.score_down(100)
@@ -308,8 +375,17 @@ def main():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.score_up(10)  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
+            
+        for emy in pg.sprite.groupcollide(emys, chage_beam, True, False).keys():
+            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            score.score_up(10)  # 10点アップ
+            bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.score_up(1)  # 1点アップ
+            
+        for bomb in pg.sprite.groupcollide(bombs, chage_beam, True, False).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
 
@@ -337,6 +413,8 @@ def main():
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
+        chage_beam.update()
+        chage_beam.draw(screen)
         emys.update()
         emys.draw(screen)
         bombs.update()
@@ -344,6 +422,7 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        beam_status.update(screen, x)
         pg.display.update()
         tmr += 1
         clock.tick(50)
