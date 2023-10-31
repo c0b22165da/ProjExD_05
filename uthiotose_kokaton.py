@@ -150,6 +150,67 @@ class Bomb(pg.sprite.Sprite):
         if check_bound(self.rect) != (True, True):
             self.kill()
 
+class BossBomb(pg.sprite.Sprite):
+    colors = [(255, 0, 255), (1, 0, 0), (1, 0, 0), (1, 0, 0), (255, 0, 255), (0, 0, 1)]
+    def __init__(self, emy: "Enemy", bird: Bird):
+        """
+        ここではボスの攻撃を作る
+        ボスの爆弾円Surfaceを生成する
+        引数1 emy：爆弾を投下する敵機
+        引数2 bird：攻撃対象のプレイヤー　ここは今後名前を変える。
+        """
+        super().__init__()
+        rad = random.randint(100, 150)  # 爆弾円の半径：50以上100以下の乱数
+        color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
+        self.image = pg.Surface((2*rad, 2*rad))
+        pg.draw.circle(self.image, color, (rad, rad), rad)
+        self.image.set_colorkey((0, 0, 0))
+        self.rect = self.image.get_rect()
+        # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
+        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
+        self.rect.centerx = emy.rect.centerx
+        self.rect.centery = emy.rect.centery+emy.rect.height/2
+        self.speed = 4
+
+    def update(self):
+        """
+        爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+        
+class SmallBossBomb(pg.sprite.Sprite):
+    colors = [(255, 255, 0), (0, 255, 255), (0, 0, 255), (255, 0, 0), (255, 255, 255), (200, 70, 120)]
+    def __init__(self, emy: "Enemy", bird: Bird):
+        """
+        ここではボスの周りを旋回する小さい敵の攻撃を作る
+        小さいボスの爆弾円Surfaceを生成する
+        引数1 emy：爆弾を投下する敵機
+        引数2 bird：攻撃対象のプレイヤー　ここは今後名前を変える。
+        """
+        super().__init__()
+        small_rad=random.randint(10,30)
+        color=random.choice(__class__.colors)
+        self.image = pg.Surface((2*small_rad, 2*small_rad))
+        pg.draw.circle(self.image, color, (small_rad, small_rad), small_rad)
+        self.image.set_colorkey((0,0,0))
+        self.rect=self.image.get_rect()
+        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)
+        self.rect.centerx = emy.rect.centerx
+        self.rect.centery = emy.rect.centery+emy.rect.height/2
+        self.speed = 8
+
+    def update(self):
+        """
+        爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+
 
 class Beam(pg.sprite.Sprite):
     """
@@ -185,7 +246,7 @@ class Explosion(pg.sprite.Sprite):
     """
     爆発に関するクラス
     """
-    def __init__(self, obj: "Bomb|Enemy", life: int):
+    def __init__(self, obj: "BossBomb|Bomb|SmallBossBomb|Enemy", life: int): 
         """
         爆弾が爆発するエフェクトを生成する
         引数1 obj：爆発するBombまたは敵機インスタンス
@@ -270,6 +331,7 @@ def main():
 
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
+    boss_bombs=pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
@@ -299,17 +361,27 @@ def main():
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
+        #for emy in emys:
+        #    if emy.state == "stop" and tmr  %emy.interval == 0:
+        #        # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
+         #       bombs.add(Bomb(emy, bird))
+                
+
+        
         for emy in emys:
-            if emy.state == "stop" and tmr%emy.interval == 0:
+            if tmr%emy.interval == 0 :#ここは実装されたボスが個別に保有する
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, bird))
+                bombs.add(SmallBossBomb(emy, bird))
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.score_up(10)  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
-        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
+        #for bomb in pg.sprite.groupcollide(boss_bombs, beams, False, True).keys():
+            #exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+
+        for bomb in pg.sprite.groupcollide(bombs, beams, False, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
 
