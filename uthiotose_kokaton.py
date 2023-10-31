@@ -332,6 +332,7 @@ def main():
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     boss_bombs=pg.sprite.Group()
+    small_bombs=pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
@@ -372,6 +373,8 @@ def main():
             if tmr%emy.interval == 0 :#ここは実装されたボスが個別に保有する
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(SmallBossBomb(emy, bird))
+                bombs.add(Bomb(emy, bird))
+
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -398,8 +401,19 @@ def main():
 
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
-
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+            score.update(screen)
+            pg.display.update()
+            time.sleep(2)
+            return
+        
+        if len(pg.sprite.spritecollide(bird,boss_bombs,True)) !=0:#ボス用こうかとんの当たり判定
+            bird.change_img(8, screen) # こうかとん悲しみエフェクト
+            score.update(screen)
+            pg.display.update()
+            time.sleep(2)
+            return
+        
+        if len(pg.sprite.spritecollide(bird,small_bombs,True)) !=0:#小ボス用こうかとんの当たり判定
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
             pg.display.update()
