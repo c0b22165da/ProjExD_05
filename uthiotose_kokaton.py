@@ -358,20 +358,13 @@ def main():
 
         screen.blit(bg_img, [0, 0])
 
-<<<<<<< HEAD
         if not boss_attack:
             if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
                 emys.add(Enemy())
 
             for emy in emys:
                 if emy.state == "stop" and tmr%emy.interval == 0:
-=======
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
 
-        for emy in emys:
-            if emy.state == "stop" and tmr%emy.interval == 0:
->>>>>>> ufochange
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                     bombs.add(Bomb(emy, bird))
 
@@ -392,30 +385,13 @@ def main():
                 exps.add(Explosion(bomb, 50))
                 score.score_up(1)
             if bird.state=="nomal":
-<<<<<<< HEAD
-=======
                 bird.change_img(8, screen) # こうかとん悲しみエフェクト
                 score.font = pg.font.Font(None, 250)
                 score.rect.center = WIDTH/2-250, HEIGHT/2 #スコアをやられた際に真ん中に表示
->>>>>>> ufochange
                 score.update(screen)
-                # font = pg.font.Font(None, 250)
-                # color = (0, 0, 255)
-                # image3 = font.render(f"Game Over", 0, color)
-                # image3.update(screen)
                 pg.display.update()
                 time.sleep(2)
                 return
-
-        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
-
-        # if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-        #     bird.change_img(8, screen) # こうかとん悲しみエフェクト
-        #     score.update(screen)
-        #     pg.display.update()
-        #     time.sleep(2)
-        #     return
 
         if boss_attack:
             boss_hp.update(screen)
