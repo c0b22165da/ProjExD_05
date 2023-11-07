@@ -20,7 +20,6 @@ def check_bound(obj: pg.Rect) -> tuple[bool, bool]:
 
 
 
-
 def calc_orientation(org: pg.Rect, dst: pg.Rect) -> tuple[float, float]:
     """
     orgから見て，dstがどこにあるかを計算し，方向ベクトルをタプルで返す
