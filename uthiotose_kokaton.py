@@ -294,11 +294,13 @@ class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
-    imgs = [pg.image.load(f"ex05/fig/alien{i}.png") for i in range(1, 4)]
+    imgs = pg.image.load(f"ex05/fig/3.png")
+    imgs2 = pg.transform.flip(imgs, True, False) #反転したこうかとん
 
     def __init__(self):
         super().__init__()
-        self.image = random.choice(__class__.imgs)
+        self.image = self.imgs
+        self.image2 = self.imgs2
         self.rect = self.image.get_rect()
         self.rect.center = random.randint(0, WIDTH), 0
         self.vy = +6
@@ -318,8 +320,8 @@ class Enemy(pg.sprite.Sprite):
             self.state = "stop"
         self.rect.centery += self.vy
 
-        # if WIDTH/2 > self.rect[0]:
-        #     self.image = self.image2 #画面の左半分だったらこうかとんの画像を反転する
+        if WIDTH/2 > self.rect[0]:
+            self.image = self.image2 #画面の左半分だったらこうかとんの画像を反転する
 
 
 class Boss(pg.sprite.Sprite):
