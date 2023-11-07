@@ -397,6 +397,7 @@ def main():
     s_boss = pg.sprite.Group()
 
     tmr = 0
+    x = 0
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
@@ -432,6 +433,21 @@ def main():
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.score_up(10)  # 10点アップ
+            
+        # チャージビームの判定
+        for emy in pg.sprite.groupcollide(emys, charge_beam, True, False).keys():
+            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            score.score_up(10)  # 10点アップ
+            bird.change_img(6, screen)  # こうかとん喜びエフェクト
+
+        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.score_up(1)  # 1点アップ
+
+        # チャージビームの判定   
+        for bomb in pg.sprite.groupcollide(bombs, charge_beam, True, False).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.score_up(1)  # 1点アップ
 
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
@@ -474,11 +490,14 @@ def main():
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
+        charge_beam.update()
+        charge_beam.draw(screen)
         bombs.update()
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        beam_status.update(screen, x)
         if score.score > 20 and boss_attack==False:
             boss_attack = True
             boss.add(Boss())
