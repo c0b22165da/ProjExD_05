@@ -273,7 +273,7 @@ class Enemy(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stop"
         self.rect.centery += self.vy
-        
+
         if WIDTH/2 > self.rect[0]:
             self.image = self.image2 #画面の左半分だったらこうかとんの画像を反転する
 
@@ -360,7 +360,7 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         screen.blit(self.image, self.rect)
-        
+
 class Beam_status:
     """
     ビームの状態を表すステータス。ビームのクラスではなく状態を表示させる。
@@ -418,7 +418,7 @@ def main():
                     x = 0
             if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 x += 1
-                
+
 
             if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
                 bird.speed = 20
@@ -440,7 +440,7 @@ def main():
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.score_up(10)  # 10点アップ
-            
+
         # チャージビームの判定
         for emy in pg.sprite.groupcollide(emys, charge_beam, True, False).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -451,7 +451,7 @@ def main():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
 
-        # チャージビームの判定   
+        # チャージビームの判定
         for bomb in pg.sprite.groupcollide(bombs, charge_beam, True, False).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
