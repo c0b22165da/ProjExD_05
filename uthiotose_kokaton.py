@@ -89,6 +89,7 @@ class Aircraft(pg.sprite.Sprite):
                     self.rect.move_ip(-self.speed*mv[0], -self.speed*mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
+            # self.image = self.imgs[self.dire]
         if self.state == "hyper":
            self.hyper_life -= 1
            self.img=pg.transform.laplacian(self.img)
@@ -156,8 +157,43 @@ class Beam(pg.sprite.Sprite):
         引数 bird：ビームを放つ戦闘機
         """
         super().__init__()
-        self.vx, self.vy = (0, -1)
+        self.vx, self.vy = (0,-1) # bird.get_direction()
         angle = math.degrees(math.atan2(-self.vy, self.vx))
+        self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0) 
+        self.vx = math.cos(math.radians(angle))
+        self.vy = -math.sin(math.radians(angle))    
+        self.rect = self.image.get_rect()
+        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
+        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.speed = 10
+
+    def update(self):
+        """
+        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
+
+
+class Charge_Beam(pg.sprite.Sprite):
+    """
+    チャージビームに関するクラス。
+    """
+    def __init__(self, bird: Bird, x:int):
+        """
+        ビーム画像Surfaceを生成する
+        引数 bird：ビームを放つこうかとん
+        引数x：チャージ回数
+        """
+        super().__init__()
+        self.vx, self.vy = (0,-1)
+        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        if 10 <= x <20:
+            self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 3.0) 
+        elif 20 <= x:
+            self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 5.0) 
         self.image = pg.transform.rotozoom(pg.image.load(f"ex05/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -176,6 +212,7 @@ class Beam(pg.sprite.Sprite):
         self.rect.move_ip(+self.speed*self.vx, +self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
+
 
 
 
@@ -276,6 +313,30 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.score}", 0, self.color)
         screen.blit(self.image, self.rect)
+        
+class Beam_status:
+    """
+    ビームの状態を表すステータス。ビームのクラスではなく状態を表示させる。
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 255, 255)
+        self.image = self.font.render(f"normal_beam", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 300, HEIGHT-50
+
+    def update(self, screen: pg.Surface, x:int):
+        """
+        x：ビームのチャージ回数。20が一番上それ以上は変わらない
+        """
+        if x < 10:
+            self.image = self.font.render(f"normal BEAM", 0, self.color)
+        elif 10 <= x < 20:
+            self.image = self.font.render(f"charge BEAM", 0, (255,255,0))
+        elif 20 <= x:
+            self.image = self.font.render(f"super BEAM", 0, (255,0,0))
+        screen.blit(self.image, self.rect)
+
 
 
 
@@ -287,9 +348,11 @@ def main():
     aircraft = Aircraft((800, 825))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
+    charge_beam = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     tmr = 0
+    x = 0
     clock = pg.time.Clock()
 
     while True:
@@ -302,23 +365,50 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.score > 100:
                 score.score_down(100)
                 aircraft.change_state("hyper",500)
+                if x < 10:
+                    beams.add(Beam(bird))
+                else:
+                    charge_beam.add(Charge_Beam(bird,x))
+                    x = 0
+            if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
+                x += 1
+                
+
             if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
                 aircraft.speed = 20
             if event.type == pg.KEYUP and event.key == pg.K_LSHIFT:
                 aircraft.speed = 10
         screen.blit(bg_img, [0, 0])
-        
-        if tmr%200 == 0: # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
-        
-        for emy in emys:
-            if emy.state == "stop" and tmr%emy.interval == 0:
-                # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, aircraft))
+
+
+        if not boss_attack:
+            if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+                emys.add(Enemy())
+
+            for emy in emys:
+                if emy.state == "stop" and tmr%emy.interval == 0:
+                    # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
+                    bombs.add(Bomb(emy, bird))
+
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
-            exps.add(Explosion(emy, 100)) # 爆発エフェクト
-            score.score_up(10) # 10点アップ
-        
+            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            score.score_up(10)  # 10点アップ
+            
+        # チャージビームの判定
+        for emy in pg.sprite.groupcollide(emys, charge_beam, True, False).keys():
+            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            score.score_up(10)  # 10点アップ
+            bird.change_img(6, screen)  # こうかとん喜びエフェクト
+
+        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.score_up(1)  # 1点アップ
+
+        # チャージビームの判定   
+        for bomb in pg.sprite.groupcollide(bombs, charge_beam, True, False).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.score_up(1)  # 1点アップ
+
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50)) # 爆発エフェクト
             score.score_up(1) # 1点アップ
@@ -327,9 +417,17 @@ def main():
             if aircraft.state=="hyper":
                 exps.add(Explosion(bomb, 50))
                 score.score_up(1)
+            if bird.state=="nomal":
+                bird.change_img(8, screen) # こうかとん悲しみエフェクト
+                score.font = pg.font.Font(None, 250)
+                score.rect.center = WIDTH/2-250, HEIGHT/2 #スコアをやられた際に真ん中に表示
             if aircraft.state=="nomal":
                 aircraft.change_img(screen) # 戦闘機爆発エフェクト
                 score.update(screen)
+                font = pg.font.Font(None, 250)
+                color = (0, 0, 255)
+                image3 = font.render(f"Game Over", 0, color)
+                image3.update(screen)
                 pg.display.update()
                 time.sleep(2)
                 return
@@ -346,11 +444,20 @@ def main():
         beams.draw(screen)
         emys.update()
         emys.draw(screen)
+        charge_beam.update()
+        charge_beam.draw(screen)
         bombs.update()
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        beam_status.update(screen, x)
+        if score.score > 20 and boss_attack==False:
+            boss_attack = True
+            boss.add(Boss())
+            s_boss.add(S_Boss(200))
+            s_boss.add(S_Boss(1200))
+            boss_hp = Boss_HP(150)
         pg.display.update()
         tmr += 1
         clock.tick(50)
