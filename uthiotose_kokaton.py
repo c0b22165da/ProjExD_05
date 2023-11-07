@@ -413,14 +413,14 @@ def main():
                 aircraft.speed = 10
         screen.blit(bg_img, [0, 0])
 
-
         if not boss_attack:
             if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
                 emys.add(Enemy())
 
             for emy in emys:
                 if emy.state == "stop" and tmr%emy.interval == 0:
-                    # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
+
+                # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                     bombs.add(Bomb(emy, bird))
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
@@ -457,12 +457,25 @@ def main():
                 bird.change_img(8, screen) # こうかとん悲しみエフェクト
                 score.font = pg.font.Font(None, 250)
                 score.rect.center = WIDTH/2-250, HEIGHT/2 #スコアをやられた際に真ん中に表示
+
             if aircraft.state=="nomal":
                 aircraft.change_img(screen) # 戦闘機爆発エフェクト
                 score.update(screen)
                 pg.display.update()
                 time.sleep(2)
                 return
+
+        if boss_attack:
+            boss_hp.update(screen)
+            boss.draw(screen)
+            s_boss.update()
+            s_boss.draw(screen)
+            if boss_hp.now_life==0:
+                boss_attack = False
+        else:
+            emys.update()
+            emys.draw(screen)
+        bird.update(key_lst, screen)
 
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
