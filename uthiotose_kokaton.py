@@ -475,7 +475,6 @@ def main():
                 aircraft.speed = 10
         screen.blit(bg_img, [0, 0])
 
-
         if not boss_attack:
             if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
                 emys.add(Enemy())
@@ -547,6 +546,7 @@ def main():
                 aircraft.change_img(screen)
                 score.font = pg.font.Font(None, 250)
                 score.rect.center = WIDTH/2-250, HEIGHT/2 #スコアをやられた際に真ん中に表示
+
             if aircraft.state=="nomal":
                 aircraft.change_img(screen) # 戦闘機爆発エフェクト
                 score.update(screen)
